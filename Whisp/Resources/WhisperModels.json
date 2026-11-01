@@ -1,0 +1,8 @@
+[
+  {"id":"tiny","repository":"Systran/faster-whisper-tiny"},
+  {"id":"base","repository":"Systran/faster-whisper-base"},
+  {"id":"small","repository":"Systran/faster-whisper-small"},
+  {"id":"medium","repository":"Systran/faster-whisper-medium"},
+  {"id":"large-v3","repository":"Systran/faster-whisper-large-v3"},
+  {"id":"large-v3-turbo","repository":"mobiuslabsgmbh/faster-whisper-large-v3-turbo"}
+]

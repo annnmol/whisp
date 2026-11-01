@@ -1,0 +1,56 @@
+# Disabled Whisp build workflow. Only release.yml is currently active.
+# To enable: uncomment the workflow starting at "name:" below, then rename
+# this file to build.yml. Keep these instructions commented out.
+#
+# name: Build Whisp
+#
+# on:
+#   push:
+#     branches:
+#       - "**"
+#   pull_request:
+#   workflow_dispatch:
+#
+# permissions:
+#   contents: read
+#
+# concurrency:
+#   group: build-whisp-${{ github.ref }}
+#   cancel-in-progress: true
+#
+# jobs:
+#   build:
+#     runs-on: macos-26
+#     timeout-minutes: 30
+#     defaults:
+#       run:
+#         shell: bash
+#
+#     steps:
+#       - name: Checkout Whisp
+#         uses: actions/checkout@v5
+#         with:
+#           persist-credentials: false
+#
+#       - name: Select Xcode 26.2
+#         run: |
+#           set -euo pipefail
+#           sudo xcode-select -s /Applications/Xcode_26.2.app/Contents/Developer
+#           xcodebuild -version
+#
+#       - name: Build Whisp for Apple Silicon
+#         run: |
+#           set -euo pipefail
+#           xcodebuild -project Whisp.xcodeproj -scheme Whisp \
+#             -configuration Release -destination 'generic/platform=macOS' \
+#             -derivedDataPath build \
+#             ARCHS=arm64 ONLY_ACTIVE_ARCH=NO \
+#             CODE_SIGNING_ALLOWED=NO build
+#
+#       - name: Verify Whisp build output
+#         run: |
+#           set -euo pipefail
+#           test "$(lipo -archs build/Build/Products/Release/Whisp.app/Contents/MacOS/Whisp)" = arm64
+#           test -f build/Build/Products/Release/Whisp.app/Contents/Resources/worker.py
+#           test -f build/Build/Products/Release/Whisp.app/Contents/Resources/model_download.py
+#           test -f build/Build/Products/Release/Whisp.app/Contents/Resources/WhisperModels.json

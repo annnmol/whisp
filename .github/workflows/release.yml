@@ -1,0 +1,96 @@
+name: Release Whisp
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: macos-26
+    timeout-minutes: 30
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout Whisp
+        uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+
+      - name: Validate release version
+        run: |
+          set -euo pipefail
+          if [[ ! "$GITHUB_REF_NAME" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Use a version tag such as v0.1.0 or v1.0.0."
+            exit 1
+          fi
+          echo "WHISP_VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+
+      - name: Select Xcode 26.2
+        run: |
+          set -euo pipefail
+          sudo xcode-select -s /Applications/Xcode_26.2.app/Contents/Developer
+          xcodebuild -version
+
+      - name: Build Whisp for Apple Silicon
+        run: |
+          set -euo pipefail
+          xcodebuild -project Whisp.xcodeproj -scheme Whisp \
+            -configuration Release -destination 'generic/platform=macOS' \
+            -derivedDataPath build \
+            ARCHS=arm64 ONLY_ACTIVE_ARCH=NO \
+            CODE_SIGNING_ALLOWED=NO \
+            MARKETING_VERSION="$WHISP_VERSION" \
+            CURRENT_PROJECT_VERSION="$GITHUB_RUN_NUMBER" build
+          test "$(lipo -archs build/Build/Products/Release/Whisp.app/Contents/MacOS/Whisp)" = arm64
+          test -f build/Build/Products/Release/Whisp.app/Contents/Resources/worker.py
+          test -f build/Build/Products/Release/Whisp.app/Contents/Resources/model_download.py
+          test -f build/Build/Products/Release/Whisp.app/Contents/Resources/WhisperModels.json
+
+      - name: Package Whisp
+        run: |
+          set -euo pipefail
+          mkdir -p release/staging
+          ditto build/Build/Products/Release/Whisp.app release/staging/Whisp.app
+          # Ad-hoc signing needs no secrets. It is NOT Developer ID signing or notarization.
+          codesign --force --sign - --timestamp=none release/staging/Whisp.app
+          codesign --verify --deep --strict release/staging/Whisp.app
+          ln -s /Applications release/staging/Applications
+          hdiutil create -volname Whisp -srcfolder release/staging \
+            -ov -format UDZO "release/Whisp-${GITHUB_REF_NAME}-arm64.dmg"
+          ditto -c -k --sequesterRsrc --keepParent release/staging/Whisp.app \
+            "release/Whisp-${GITHUB_REF_NAME}-arm64.zip"
+          cd release
+          shasum -a 256 "Whisp-${GITHUB_REF_NAME}-arm64.dmg" \
+            "Whisp-${GITHUB_REF_NAME}-arm64.zip" > SHA256SUMS.txt
+          cat > NOTES.md <<'NOTES'
+          Whisp is a local macOS audio-transcription app powered by WhisperX. These downloads support Apple Silicon Macs only and require macOS 15.8 or newer.
+
+          Install compatible Python (3.11 recommended) and FFmpeg separately. Open Tools & setup to choose a data folder and install the isolated WhisperX environment. See the README.
+
+          **Signing:** these builds are ad-hoc signed, not Developer ID signed or notarized. macOS may block first launch. Only proceed if you trust the release; this workflow does not disable or bypass macOS security controls.
+          NOTES
+
+      - name: Create Whisp GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          gh release create "$GITHUB_REF_NAME" \
+            "release/Whisp-${GITHUB_REF_NAME}-arm64.dmg" \
+            "release/Whisp-${GITHUB_REF_NAME}-arm64.zip" \
+            release/SHA256SUMS.txt \
+            --verify-tag \
+            --title "Whisp ${GITHUB_REF_NAME}" \
+            --notes-file release/NOTES.md \
+            --generate-notes

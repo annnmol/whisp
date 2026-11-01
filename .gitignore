@@ -1,0 +1,31 @@
+# macOS metadata (at any directory depth)
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Local Xcode state; shared project files and schemes stay tracked
+**/xcuserdata/
+*.xcuserstate
+
+# Build output at the repository root
+/build/
+/release/
+/DerivedData/
+
+# Local archives and distributables
+*.xcarchive/
+*.dSYM/
+*.ipa
+*.dmg
+
+# Local environment values
+.env
+.env.*
+!.env.example
+
+# Local WhisperX setup and Python caches
+Whisp Data/
+.venv/
+__pycache__/
+*.pyc

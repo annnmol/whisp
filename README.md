@@ -1,33 +1,29 @@
-# Unmark
+# Whisp
 
-Unmark is a lightweight, open-source macOS app for removing watermarks and small unwanted marks from images. Everything runs locally on your Mac.
+Whisp is a lightweight, open-source macOS app for local audio transcription, subtitles and word timestamps, powered by [WhisperX](https://github.com/m-bain/whisperX).
 
 ## Installation
 
-1. Download the latest Unmark `.dmg` from [GitHub Releases](https://github.com/annnmol/unmark/releases). Requires an Apple Silicon Mac (M-series chip).
-2. Open the DMG and drag **Unmark.app** into the **Applications** folder.
-3. Open **Applications** and double-click **Unmark**.
-4. If macOS blocks the app, go to **System Settings → Privacy & Security → Open Anyway → Open**.
+1. Download the latest Whisp `.dmg` from [GitHub Releases](https://github.com/annnmol/whisp/releases).
+2. Open it and drag **Whisp.app** into **Applications**.
+3. Open **Whisp**. If macOS blocks it, use **System Settings → Privacy & Security → Open Anyway** for a release you trust.
 
-Alternatively, for a downloaded release you trust:
-
-```bash
-xattr -dr com.apple.quarantine /Applications/Unmark.app && open /Applications/Unmark.app
-```
-
-Note: Releases are currently ad-hoc signed and not notarized, so macOS may show a security warning on first launch. Requires macOS 15.8 or newer.
+Requires an Apple Silicon Mac and macOS 15.8 or newer. Releases are ad-hoc signed and not notarized.
 
 ## Setup
 
-Install FFmpeg and FFprobe. If you use Homebrew:
+Install **Python 3.11** (3.10–3.13 supported) and **FFmpeg / FFprobe** yourself. With Homebrew:
 
 ```bash
-brew install ffmpeg
+brew install python@3.11 ffmpeg
 ```
 
-Open **Tools → Test tools** in Unmark to verify the installation. Then pick or drag images to start cleaning. Each image can be up to **10 MB** and **25 megapixels**.
+Open **Tools & setup**, choose a folder, **Test tools**, then **Install environment**. In the model list, download the transcription models you want; only downloaded models can be selected. Each model has availability, progress, selection and delete controls. Whisp creates `Whisp Data` inside that folder for its virtual environment, models, caches and temporary files. Python and FFmpeg are never installed globally by the app. Keep the setup folder in place; virtual environments are not portable.
 
-To connect a local AI app, enable **Settings → AI access** and copy the address and token.
+Pick or drop one audio or video file (MP3, WAV, MP4, MOV, MKV, WebM and more), choose a preset and transcribe. **Standard** matches the basic Hindi CPU/int8 command. **Detailed** uses large-v3, Silero, 15-second chunks, batch size 1 and JSON output. Choose **Output format** before transcribing: JSON, TXT, SRT, VTT, TSV or **All formats**. Use **Save** or **Save all** to export. JSON includes word timestamps when alignment succeeds. Each file is limited to **200 MB** and four hours; videos must contain an audio track, which is transcribed locally. The original video is kept unchanged; processing has a six-hour time limit.
+
+Model downloads need internet and potentially several GB. Language alignment and speech-detection resources may download separately on first use, into the same folder. Later runs reuse downloaded resources. Temporary transcripts clear when the window closes; saved files, models and the environment remain. Tools includes separate buttons for temporary cleanup and removing models/caches. **Logs** opens live terminal output during setup and transcription; use **Copy logs** or **Save log** for the full captured session. Logs clear with temporary data or when the main window closes.
+
+Enable **Settings → AI access** for a local MCP connection. **About** shows the installed version and checks GitHub Releases; an available update opens the DMG download for manual installation.
 
 [AI access (MCP)](docs/MCP.md) · [MIT License](LICENSE)
-# whisp
